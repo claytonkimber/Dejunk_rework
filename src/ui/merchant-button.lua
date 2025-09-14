@@ -12,6 +12,7 @@ local Widgets = Addon:GetModule("Widgets")
 
 local TSM_JUNK_TEXT_FORMAT = Colors.Grey("(%s)"):format(Colors.White("%s"))
 local LABEL_TEXT_FORMAT = Colors.Grey("(%s/%s)"):format(Colors.White("%s"), Colors.Red("%s"))
+local PROFIT_TEXT_FORMAT = TSM_JUNK_TEXT_FORMAT .. " " .. L.PROFIT:format("%s")
 
 -- ============================================================================
 -- Initialize
@@ -34,22 +35,11 @@ local frame = Widgets:Button({
       local tsmJunk = JunkFilter:GetSellableTsmJunkItems()
       JunkFilter.forceTsmCheck = false
 
-      if #tsmJunk > 0 then
-        local totalProfit = 0
-        for _, item in ipairs(tsmJunk) do
-          local disenchantValue = TSM:GetDisenchantValue(item.link) or 0
-          totalProfit = totalProfit + (item.price - disenchantValue)
-        end
-
-        local item = tsmJunk[1]
+      local item = tsmJunk[1]
+      if item then
         tooltip:SetBagItem(item.bag, item.slot)
         tooltip:AddLine(" ")
         tooltip:AddDoubleLine(L.LEFT_CLICK, L.START_SELLING .. " TSM Junk")
-
-        if totalProfit > 0 then
-          tooltip:AddLine(L.PROFIT:format(GetMoneyString(totalProfit, true)))
-        end
-
         tooltip:Show()
         return
       end
@@ -122,7 +112,18 @@ frame:HookScript("OnUpdate", function(_, elapsed)
     JunkFilter.forceTsmCheck = true
     local tsmJunk = JunkFilter:GetSellableTsmJunkItems()
     JunkFilter.forceTsmCheck = false
-    frame.label:SetText(TSM_JUNK_TEXT_FORMAT:format(#tsmJunk))
+
+    local totalProfit = 0
+    for _, item in ipairs(tsmJunk) do
+      local disenchantValue = TSM:GetDisenchantValue(item.link) or 0
+      totalProfit = totalProfit + (item.price - disenchantValue)
+    end
+
+    if totalProfit > 0 then
+      frame.label:SetText(PROFIT_TEXT_FORMAT:format(#tsmJunk, GetMoneyString(totalProfit, true)))
+    else
+      frame.label:SetText(TSM_JUNK_TEXT_FORMAT:format(#tsmJunk))
+    end
   else
     local numSellable, numDestroyable = JunkFilter:GetNumJunkItems()
     frame.label:SetText(LABEL_TEXT_FORMAT:format(numSellable, numDestroyable))
