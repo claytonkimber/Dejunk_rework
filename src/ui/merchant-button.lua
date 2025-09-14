@@ -11,8 +11,8 @@ local TickerManager = Addon:GetModule("TickerManager")
 local Widgets = Addon:GetModule("Widgets")
 
 local TSM_JUNK_TEXT_FORMAT = Colors.Grey("(%s)"):format(Colors.White("%s"))
+local PROFIT_TEXT_FORMAT = Colors.Grey("(%s, %s)")
 local LABEL_TEXT_FORMAT = Colors.Grey("(%s/%s)"):format(Colors.White("%s"), Colors.Red("%s"))
-local PROFIT_TEXT_FORMAT = TSM_JUNK_TEXT_FORMAT .. " " .. L.PROFIT:format("%s")
 
 -- ============================================================================
 -- Initialize
@@ -29,21 +29,6 @@ local frame = Widgets:Button({
   enableDragging = true,
   onUpdateTooltip = function(this, tooltip)
     tooltip:SetOwner(this, "ANCHOR_RIGHT")
-
-    if IsControlKeyDown() then
-      JunkFilter.forceTsmCheck = true
-      local tsmJunk = JunkFilter:GetSellableTsmJunkItems()
-      JunkFilter.forceTsmCheck = false
-
-      local item = tsmJunk[1]
-      if item then
-        tooltip:SetBagItem(item.bag, item.slot)
-        tooltip:AddLine(" ")
-        tooltip:AddDoubleLine(L.LEFT_CLICK, L.START_SELLING .. " TSM Junk")
-        tooltip:Show()
-        return
-      end
-    end
 
     if IsAltKeyDown() then
       local item = JunkFilter:GetNextDestroyableJunkItem()
