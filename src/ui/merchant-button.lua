@@ -15,6 +15,24 @@ local PROFIT_TEXT_FORMAT = Colors.Grey("(%s, %s)")
 local LABEL_TEXT_FORMAT = Colors.Grey("(%s/%s)"):format(Colors.White("%s"), Colors.Red("%s"))
 
 -- ============================================================================
+-- Local Functions
+-- ============================================================================
+
+local function GetMoneyStringNoCopper(amount)
+  if not amount or amount <= 0 then return "" end
+  local gold = floor(amount / 10000)
+  local silver = floor(amount / 100) % 100
+
+  local goldString = gold > 0 and ("%d|T%s:0|t"):format(gold, "Interface\\MoneyFrame\\UI-GoldIcon") or ""
+  local silverString = silver > 0 and ("%d|T%s:0|t"):format(silver, "Interface\\MoneyFrame\\UI-SilverIcon") or ""
+
+  if gold > 0 and silver > 0 then
+    return goldString .. " " .. silverString
+  end
+  return goldString .. silverString
+end
+
+-- ============================================================================
 -- Initialize
 -- ============================================================================
 
@@ -43,8 +61,8 @@ local frame = Widgets:Button({
 
     tooltip:AddDoubleLine(Colors.Blue(ADDON_NAME), Colors.Grey(Addon.VERSION))
     tooltip:AddLine(Addon:SubjectDescription(L.LEFT_CLICK, L.START_SELLING))
-    tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.CONTROL_KEY, L.LEFT_CLICK), L.START_SELLING .. " TSM Junk"))
     tooltip:AddLine(Addon:SubjectDescription(L.RIGHT_CLICK, L.TOGGLE_OPTIONS_FRAME))
+    tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.CONTROL_KEY, L.LEFT_CLICK), L.START_SELLING .. " TSM Junk"))
     tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.SHIFT_KEY, L.LEFT_CLICK), L.TOGGLE_JUNK_FRAME))
     tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.SHIFT_KEY, L.RIGHT_CLICK), L.RESET_POSITION))
     tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.ALT_KEY, L.RIGHT_CLICK), Colors.Red(L.DESTROY_NEXT_ITEM)))
@@ -105,7 +123,7 @@ frame:HookScript("OnUpdate", function(_, elapsed)
     end
 
     if totalProfit > 0 then
-      frame.label:SetText(PROFIT_TEXT_FORMAT:format(#tsmJunk, GetMoneyString(totalProfit, true)))
+      frame.label:SetText(PROFIT_TEXT_FORMAT:format(#tsmJunk, GetMoneyStringNoCopper(totalProfit)))
     else
       frame.label:SetText(TSM_JUNK_TEXT_FORMAT:format(#tsmJunk))
     end
