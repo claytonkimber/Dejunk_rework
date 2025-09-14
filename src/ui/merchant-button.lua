@@ -6,6 +6,7 @@ local Commands = Addon:GetModule("Commands")
 local JunkFilter = Addon:GetModule("JunkFilter")
 local L = Addon:GetModule("Locale")
 local StateManager = Addon:GetModule("StateManager")
+local TSM = Addon:GetModule("TSM")
 local TickerManager = Addon:GetModule("TickerManager")
 local Widgets = Addon:GetModule("Widgets")
 
@@ -33,11 +34,22 @@ local frame = Widgets:Button({
       local tsmJunk = JunkFilter:GetSellableTsmJunkItems()
       JunkFilter.forceTsmCheck = false
 
-      local item = tsmJunk[1]
-      if item then
+      if #tsmJunk > 0 then
+        local totalProfit = 0
+        for _, item in ipairs(tsmJunk) do
+          local disenchantValue = TSM:GetDisenchantValue(item.link) or 0
+          totalProfit = totalProfit + (item.price - disenchantValue)
+        end
+
+        local item = tsmJunk[1]
         tooltip:SetBagItem(item.bag, item.slot)
         tooltip:AddLine(" ")
         tooltip:AddDoubleLine(L.LEFT_CLICK, L.START_SELLING .. " TSM Junk")
+
+        if totalProfit > 0 then
+          tooltip:AddLine(L.PROFIT:format(GetMoneyString(totalProfit, true)))
+        end
+
         tooltip:Show()
         return
       end
