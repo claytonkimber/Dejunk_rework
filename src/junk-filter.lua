@@ -52,7 +52,6 @@ local function getJunkItems(filterFunc, items)
 
     if isJunk then
       item.reason = reason
-      print("Dejunk TSM Debug: getJunkItems: Marked " .. item.name .. " as junk. Reason: " .. reason)
     else
       table.remove(items, i)
     end
@@ -91,7 +90,6 @@ do -- Convenience methods.
   function JunkFilter:GetNumJunkItems()
     local numSellable = #self:GetSellableJunkItems(items)
     local numDestroyable = #self:GetDestroyableJunkItems(items)
-    print("Dejunk TSM Debug: GetNumJunkItems: numSellable = " .. tostring(numSellable))
     return numSellable, numDestroyable
   end
 

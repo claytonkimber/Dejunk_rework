@@ -6,11 +6,31 @@ local Commands = Addon:GetModule("Commands")
 local JunkFilter = Addon:GetModule("JunkFilter")
 local L = Addon:GetModule("Locale")
 local StateManager = Addon:GetModule("StateManager")
+local TSM = Addon:GetModule("TSM")
 local TickerManager = Addon:GetModule("TickerManager")
 local Widgets = Addon:GetModule("Widgets")
 
 local TSM_JUNK_TEXT_FORMAT = Colors.Grey("(%s)"):format(Colors.White("%s"))
+local PROFIT_TEXT_FORMAT = Colors.Grey("(%s, %s)")
 local LABEL_TEXT_FORMAT = Colors.Grey("(%s/%s)"):format(Colors.White("%s"), Colors.Red("%s"))
+
+-- ============================================================================
+-- Local Functions
+-- ============================================================================
+
+local function GetMoneyStringNoCopper(amount)
+  if not amount or amount <= 0 then return "" end
+  local gold = floor(amount / 10000)
+  local silver = floor(amount / 100) % 100
+
+  local goldString = gold > 0 and ("%d|T%s:0|t"):format(gold, "Interface\\MoneyFrame\\UI-GoldIcon") or ""
+  local silverString = silver > 0 and ("%d|T%s:0|t"):format(silver, "Interface\\MoneyFrame\\UI-SilverIcon") or ""
+
+  if gold > 0 and silver > 0 then
+    return goldString .. " " .. silverString
+  end
+  return goldString .. silverString
+end
 
 -- ============================================================================
 -- Initialize
@@ -28,21 +48,6 @@ local frame = Widgets:Button({
   onUpdateTooltip = function(this, tooltip)
     tooltip:SetOwner(this, "ANCHOR_RIGHT")
 
-    if IsControlKeyDown() then
-      JunkFilter.forceTsmCheck = true
-      local tsmJunk = JunkFilter:GetSellableTsmJunkItems()
-      JunkFilter.forceTsmCheck = false
-
-      local item = tsmJunk[1]
-      if item then
-        tooltip:SetBagItem(item.bag, item.slot)
-        tooltip:AddLine(" ")
-        tooltip:AddDoubleLine(L.LEFT_CLICK, L.START_SELLING .. " TSM Junk")
-        tooltip:Show()
-        return
-      end
-    end
-
     if IsAltKeyDown() then
       local item = JunkFilter:GetNextDestroyableJunkItem()
       if item then
@@ -56,8 +61,8 @@ local frame = Widgets:Button({
 
     tooltip:AddDoubleLine(Colors.Blue(ADDON_NAME), Colors.Grey(Addon.VERSION))
     tooltip:AddLine(Addon:SubjectDescription(L.LEFT_CLICK, L.START_SELLING))
-    tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.CONTROL_KEY, L.LEFT_CLICK), L.START_SELLING .. " TSM Junk"))
     tooltip:AddLine(Addon:SubjectDescription(L.RIGHT_CLICK, L.TOGGLE_OPTIONS_FRAME))
+    tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.CONTROL_KEY, L.LEFT_CLICK), L.START_SELLING .. " TSM Junk"))
     tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.SHIFT_KEY, L.LEFT_CLICK), L.TOGGLE_JUNK_FRAME))
     tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.SHIFT_KEY, L.RIGHT_CLICK), L.RESET_POSITION))
     tooltip:AddLine(Addon:SubjectDescription(Addon:Concat("+", L.ALT_KEY, L.RIGHT_CLICK), Colors.Red(L.DESTROY_NEXT_ITEM)))
@@ -110,7 +115,18 @@ frame:HookScript("OnUpdate", function(_, elapsed)
     JunkFilter.forceTsmCheck = true
     local tsmJunk = JunkFilter:GetSellableTsmJunkItems()
     JunkFilter.forceTsmCheck = false
-    frame.label:SetText(TSM_JUNK_TEXT_FORMAT:format(#tsmJunk))
+
+    local totalProfit = 0
+    for _, item in ipairs(tsmJunk) do
+      local disenchantValue = TSM:GetDisenchantValue(item.link) or 0
+      totalProfit = totalProfit + (item.price - disenchantValue)
+    end
+
+    if totalProfit > 0 then
+      frame.label:SetText(PROFIT_TEXT_FORMAT:format(#tsmJunk, GetMoneyStringNoCopper(totalProfit)))
+    else
+      frame.label:SetText(TSM_JUNK_TEXT_FORMAT:format(#tsmJunk))
+    end
   else
     local numSellable, numDestroyable = JunkFilter:GetNumJunkItems()
     frame.label:SetText(LABEL_TEXT_FORMAT:format(numSellable, numDestroyable))

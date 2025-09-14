@@ -335,7 +335,7 @@ function MainWindowOptions:AddTsmOptions(optionsFrame)
   do
     local frame = Widgets:OptionButton({
       labelText = L.INCLUDE_BY_TSM_DISENCHANT_TEXT,
-      tooltipText = "Include items based on their TSM disenchant value.",
+      tooltipText = L.INCLUDE_BY_TSM_DISENCHANT_TOOLTIP,
       get = function() return StateManager:GetCurrentState().includeByTsmDisenchant.enabled end,
       set = function(value) StateManager:GetStore():Dispatch(Actions:PatchIncludeByTsmDisenchant({ enabled = value })) end
     })
